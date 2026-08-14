@@ -15,7 +15,7 @@ The default order can be changed in the managed theme setting
 ## Build
 
 ```powershell
-bun install --frozen-lockfile
+bun install --no-save
 bun run lint
 bun run build
 ```
