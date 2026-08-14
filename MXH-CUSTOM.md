@@ -11,12 +11,17 @@ This private archive tracks the personal Komari theme derived from
 - Keep unmatched nodes in their original Komari `weight` order.
 - Add a seven-day preset to the ping history chart when the server retention window allows it.
 - Use the managed `siteIconUrl` setting for both the browser favicon and header icon, with the bundled favicon as fallback.
+- Link the managed theme page to Komari's built-in local favicon uploader, while retaining an optional external URL override.
+- Present managed settings with section summaries, concise help text, collapsible advanced references, and consistently formatted option labels.
 
 The default order can be changed in the managed theme setting
 `homeDefaultNodeOrder` with a comma-separated list of node-name keywords.
 
-The optional `siteIconUrl` setting accepts an HTTPS image URL or a site-relative
-path beginning with `/`. Leave it empty to use the bundled default icon.
+Use Komari's built-in local favicon uploader from the managed theme page for a
+self-hosted icon. The optional `siteIconUrl` setting accepts an HTTPS image URL
+or a site-relative path beginning with `/`; when set it overrides the locally
+uploaded icon. Leave it empty to use `/favicon.ico`, with the bundled theme icon
+as the final fallback.
 
 ## Build
 

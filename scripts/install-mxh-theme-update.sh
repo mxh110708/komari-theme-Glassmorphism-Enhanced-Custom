@@ -140,6 +140,41 @@ with zipfile.ZipFile(archive_path) as archive:
     if "dist/index.html" not in names:
         raise SystemExit("Theme entry page is missing")
 
+    configuration = manifest.get("configuration", {})
+    items = configuration.get("data", [])
+    if not isinstance(items, list):
+        raise SystemExit("Managed theme configuration is invalid")
+
+    textboxes = [
+        item.get("name", "")
+        for item in items
+        if isinstance(item, dict) and item.get("type") == "textbox"
+    ]
+    if not any('/admin/settings/site' in text for text in textboxes):
+        raise SystemExit("Local favicon upload link is missing")
+
+    expected_choices = {
+        "themeMode": ("Beijing", "Beijing,Light,Dark"),
+        "rpcTransportMode": ("HTTP", "HTTP,WebSocket"),
+        "defaultViewMode": ("Card", "Card,List"),
+        "nodeCardSize": ("Compact", "Compact,Comfortable,Large"),
+        "earthRenderer": ("Realistic", "Realistic,Cobe,Tiled"),
+        "homeQuickDefaultControl": (
+            "Default",
+            "Default,Monthly Cost,Total Traffic,Upload,Download,Peak,Offline,High Load,Expiring",
+        ),
+        "backgroundType": ("Image", "Image,Video"),
+    }
+    items_by_key = {
+        item.get("key"): item
+        for item in items
+        if isinstance(item, dict) and item.get("key")
+    }
+    for key, (default, options) in expected_choices.items():
+        item = items_by_key.get(key)
+        if not item or item.get("default") != default or item.get("options") != options:
+            raise SystemExit(f"Managed option formatting is invalid: {key}")
+
     for entry in entries:
         relative = PurePosixPath(entry.filename)
         target = stage.joinpath(*relative.parts)
@@ -186,6 +221,86 @@ try:
             raise TypeError("Existing theme configuration is not an object")
     else:
         settings = {}
+    def normalize_choice(value):
+        if not isinstance(value, str):
+            return ""
+        return "".join(
+            character
+            for character in value.strip().casefold()
+            if character not in " _-"
+        )
+
+    choice_migrations = {
+        "themeMode": ({
+            "beijing": "Beijing",
+            "beijingtime": "Beijing",
+            "light": "Light",
+            "dark": "Dark",
+        }, "Beijing"),
+        "rpcTransportMode": ({
+            "http": "HTTP",
+            "websocket": "WebSocket",
+        }, "HTTP"),
+        "defaultViewMode": ({
+            "card": "Card",
+            "list": "List",
+        }, "Card"),
+        "nodeCardSize": ({
+            "compact": "Compact",
+            "comfortable": "Comfortable",
+            "large": "Large",
+        }, "Compact"),
+        "earthRenderer": ({
+            "realistic": "Realistic",
+            "cobe": "Cobe",
+            "tiled": "Tiled",
+        }, "Realistic"),
+        "generalCardPreset": ({
+            "basic": "基础",
+            "基础": "基础",
+            "ops": "运维",
+            "运维": "运维",
+            "finance": "财务",
+            "财务": "财务",
+            "traffic": "流量",
+            "流量": "流量",
+            "full": "完整",
+            "完整": "完整",
+            "custom": "自定义",
+            "自定义": "自定义",
+        }, "基础"),
+        "homeQuickControlPreset": ({
+            "basic": "基础",
+            "基础": "基础",
+            "traffic": "流量",
+            "流量": "流量",
+            "ops": "运维",
+            "运维": "运维",
+            "full": "完整",
+            "完整": "完整",
+            "custom": "自定义",
+            "自定义": "自定义",
+        }, "完整"),
+        "homeQuickDefaultControl": ({
+            "default": "Default",
+            "monthlycost": "Monthly Cost",
+            "totaltraffic": "Total Traffic",
+            "upload": "Upload",
+            "download": "Download",
+            "peak": "Peak",
+            "offline": "Offline",
+            "highload": "High Load",
+            "expiring": "Expiring",
+        }, "Default"),
+        "backgroundType": ({
+            "image": "Image",
+            "video": "Video",
+        }, "Image"),
+    }
+
+    for key, (aliases, default) in choice_migrations.items():
+        settings[key] = aliases.get(normalize_choice(settings.get(key)), default)
+
     settings["homeDefaultNodeOrder"] = default_order
 
     connection.execute(
@@ -240,6 +355,13 @@ if "siteIconUrl" not in javascript:
     raise SystemExit("Custom site icon implementation is missing")
 configuration = manifest.get("configuration", {})
 configuration_items = configuration.get("data", [])
+textbox_markup = [
+    item.get("name", "")
+    for item in configuration_items
+    if isinstance(item, dict) and item.get("type") == "textbox"
+]
+if not any('/admin/settings/site' in markup for markup in textbox_markup):
+    raise SystemExit("Local favicon upload link is missing from the manifest")
 order_item = next(
     (
         item
@@ -261,6 +383,21 @@ icon_item = next(
 if not icon_item or icon_item.get("default") != "":
     raise SystemExit("Custom site icon setting is missing from the manifest")
 
+expected_saved_choices = {
+    "themeMode": {"Beijing", "Light", "Dark"},
+    "rpcTransportMode": {"HTTP", "WebSocket"},
+    "defaultViewMode": {"Card", "List"},
+    "nodeCardSize": {"Compact", "Comfortable", "Large"},
+    "earthRenderer": {"Realistic", "Cobe", "Tiled"},
+    "generalCardPreset": {"基础", "运维", "财务", "流量", "完整", "自定义"},
+    "homeQuickControlPreset": {"基础", "流量", "运维", "完整", "自定义"},
+    "homeQuickDefaultControl": {
+        "Default", "Monthly Cost", "Total Traffic", "Upload", "Download",
+        "Peak", "Offline", "High Load", "Expiring",
+    },
+    "backgroundType": {"Image", "Video"},
+}
+
 connection = sqlite3.connect(database)
 try:
     selected_row = connection.execute(
@@ -279,6 +416,9 @@ if not config_row:
 settings = json.loads(config_row[0])
 if settings.get("homeDefaultNodeOrder") != expected_order:
     raise SystemExit("Default node order was not saved")
+for key, allowed_values in expected_saved_choices.items():
+    if settings.get(key) not in allowed_values:
+        raise SystemExit(f"Managed setting migration failed: {key}")
 
 request_id = 0
 
@@ -323,6 +463,8 @@ print("INSTALLED_VERSION=" + expected_version)
 print("DEFAULT_ORDER=ok")
 print("SEVEN_DAY_PRESET=ok")
 print("CUSTOM_SITE_ICON=ok")
+print("LOCAL_ICON_UPLOAD_LINK=ok")
+print("MANAGED_UI_MIGRATION=ok")
 print("HISTORY_API=" + history_api_status)
 PY
 

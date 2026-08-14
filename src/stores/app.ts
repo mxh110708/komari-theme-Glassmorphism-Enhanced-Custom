@@ -57,6 +57,7 @@ type EarthRenderer = 'realistic' | 'cobe' | 'tiled'
 type ThemeSettings = Record<string, unknown>
 
 const SECURE_REMOTE_URL_PATTERN = /^https:\/\//i
+const OPTION_SEPARATOR_PATTERN = /[\s_-]+/g
 
 /** 固定的字节精度配置 */
 const BYTE_DECIMALS: ByteDecimalsConfig = {
@@ -239,14 +240,63 @@ const HOME_QUICK_CONTROL_PRESET_ALIASES: Record<string, HomeQuickControlPreset> 
   自定义: 'custom',
 }
 
+const MANAGED_THEME_MODE_ALIASES: Record<string, ManagedThemeMode> = {
+  beijing: 'beijing',
+  beijingtime: 'beijing',
+  light: 'light',
+  dark: 'dark',
+}
+
+const NODE_VIEW_MODE_ALIASES: Record<string, NodeViewMode> = {
+  card: 'card',
+  list: 'list',
+}
+
+const NODE_CARD_SIZE_ALIASES: Record<string, NodeCardSize> = {
+  compact: 'compact',
+  comfortable: 'comfortable',
+  large: 'large',
+}
+
+const RPC_TRANSPORT_MODE_ALIASES: Record<string, RpcTransportMode> = {
+  http: 'http',
+  websocket: 'websocket',
+}
+
+const EARTH_RENDERER_ALIASES: Record<string, EarthRenderer> = {
+  realistic: 'realistic',
+  cobe: 'cobe',
+  tiled: 'tiled',
+}
+
+const HOME_QUICK_DEFAULT_CONTROL_ALIASES: Record<string, HomeQuickControlKey> = {
+  default: 'default',
+  monthlycost: 'monthlyCost',
+  totaltraffic: 'totalTraffic',
+  upload: 'upload',
+  download: 'download',
+  peak: 'peak',
+  offline: 'offline',
+  highload: 'highLoad',
+  expiring: 'expiring',
+}
+
+const BACKGROUND_TYPE_ALIASES: Record<string, 'image' | 'video'> = {
+  image: 'image',
+  video: 'video',
+}
+
 const EMPTY_THEME_SETTINGS: ThemeSettings = {}
 
 function isValidThemeMode(value: unknown): value is ThemeMode {
   return value === 'auto' || value === 'light' || value === 'dark'
 }
 
-function isValidManagedThemeMode(value: unknown): value is ManagedThemeMode {
-  return value === 'beijing' || value === 'light' || value === 'dark'
+function normalizeOptionToken(value: unknown): string {
+  if (typeof value !== 'string')
+    return ''
+
+  return value.trim().toLowerCase().replace(OPTION_SEPARATOR_PATTERN, '')
 }
 
 function getBeijingHour(timestamp: number): number {
@@ -272,17 +322,11 @@ function isHomeQuickControlKey(value: string): value is HomeQuickControlKey {
 }
 
 function parseGeneralCardPreset(value: unknown): GeneralCardPreset {
-  if (typeof value !== 'string')
-    return 'basic'
-
-  return GENERAL_CARD_PRESET_ALIASES[value.trim()] ?? 'basic'
+  return GENERAL_CARD_PRESET_ALIASES[normalizeOptionToken(value)] ?? 'basic'
 }
 
 function parseHomeQuickControlPreset(value: unknown): HomeQuickControlPreset {
-  if (typeof value !== 'string')
-    return 'full'
-
-  return HOME_QUICK_CONTROL_PRESET_ALIASES[value.trim()] ?? 'full'
+  return HOME_QUICK_CONTROL_PRESET_ALIASES[normalizeOptionToken(value)] ?? 'full'
 }
 
 function normalizeThemeSettings(raw: unknown): ThemeSettings {
@@ -363,14 +407,7 @@ const useAppStore = defineStore('app', () => {
 
   // 计算属性：从主题配置获取默认视图模式
   const defaultViewMode = computed<NodeViewMode>(() => {
-    const settings = themeSettings.value
-    if (typeof settings.defaultViewMode === 'string') {
-      const mode = settings.defaultViewMode
-      if (mode === 'card' || mode === 'list') {
-        return mode
-      }
-    }
-    return 'card'
+    return NODE_VIEW_MODE_ALIASES[normalizeOptionToken(themeSettings.value.defaultViewMode)] ?? 'card'
   })
 
   // 校验视图模式是否为合法值
@@ -378,19 +415,8 @@ const useAppStore = defineStore('app', () => {
     return value === 'card' || value === 'list'
   }
 
-  function isValidNodeCardSize(value: unknown): value is NodeCardSize {
-    return value === 'compact' || value === 'comfortable' || value === 'large'
-  }
-
-  function isValidEarthRenderer(value: unknown): value is EarthRenderer {
-    return value === 'realistic' || value === 'cobe' || value === 'tiled'
-  }
-
   const nodeCardSize = computed<NodeCardSize>(() => {
-    const settings = themeSettings.value
-    if (isValidNodeCardSize(settings.nodeCardSize))
-      return settings.nodeCardSize
-    return 'compact'
+    return NODE_CARD_SIZE_ALIASES[normalizeOptionToken(themeSettings.value.nodeCardSize)] ?? 'compact'
   })
 
   // 当前实际使用的视图模式
@@ -409,14 +435,7 @@ const useAppStore = defineStore('app', () => {
 
   // 计算属性：从主题配置获取 RPC 连接模式
   const rpcTransportMode = computed<RpcTransportMode>(() => {
-    const settings = themeSettings.value
-    if (typeof settings.rpcTransportMode === 'string') {
-      const mode = settings.rpcTransportMode
-      if (mode === 'websocket' || mode === 'http') {
-        return mode
-      }
-    }
-    return 'http'
+    return RPC_TRANSPORT_MODE_ALIASES[normalizeOptionToken(themeSettings.value.rpcTransportMode)] ?? 'http'
   })
 
   // 字节格式化精度（固定配置）
@@ -451,8 +470,7 @@ const useAppStore = defineStore('app', () => {
   const stopEarth = computed<boolean>(() => readBooleanSetting(themeSettings.value, 'stopEarth', false))
 
   const earthRenderer = computed<EarthRenderer>(() => {
-    const value = themeSettings.value.earthRenderer
-    return isValidEarthRenderer(value) ? value : 'realistic'
+    return EARTH_RENDERER_ALIASES[normalizeOptionToken(themeSettings.value.earthRenderer)] ?? 'realistic'
   })
 
   const hideEarth = computed<boolean>(() => readBooleanSetting(themeSettings.value, 'hideEarth', false))
@@ -520,8 +538,8 @@ const useAppStore = defineStore('app', () => {
   })
 
   const homeQuickDefaultControl = computed<HomeQuickControlKey>(() => {
-    const value = themeSettings.value.homeQuickDefaultControl
-    if (typeof value === 'string' && isHomeQuickControlKey(value) && homeQuickControlOrder.value.includes(value))
+    const value = HOME_QUICK_DEFAULT_CONTROL_ALIASES[normalizeOptionToken(themeSettings.value.homeQuickDefaultControl)]
+    if (value && homeQuickControlOrder.value.includes(value))
       return value
     return 'default'
   })
@@ -562,14 +580,7 @@ const useAppStore = defineStore('app', () => {
   const backgroundEnabled = computed<boolean>(() => readBooleanSetting(themeSettings.value, 'backgroundEnabled', false))
 
   const backgroundType = computed<'image' | 'video'>(() => {
-    const settings = themeSettings.value
-    if (typeof settings.backgroundType === 'string') {
-      const type = settings.backgroundType
-      if (type === 'image' || type === 'video') {
-        return type
-      }
-    }
-    return 'image'
+    return BACKGROUND_TYPE_ALIASES[normalizeOptionToken(themeSettings.value.backgroundType)] ?? 'image'
   })
 
   const lightBackgroundUrl = computed<string>(() => {
@@ -605,8 +616,7 @@ const useAppStore = defineStore('app', () => {
   }, { immediate: true })
 
   const managedThemeMode = computed<ManagedThemeMode>(() => {
-    const value = themeSettings.value.themeMode
-    return isValidManagedThemeMode(value) ? value : 'beijing'
+    return MANAGED_THEME_MODE_ALIASES[normalizeOptionToken(themeSettings.value.themeMode)] ?? 'beijing'
   })
 
   const isBeijingDaytime = computed<boolean>(() => {
