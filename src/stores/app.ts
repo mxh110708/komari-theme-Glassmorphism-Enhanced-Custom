@@ -56,6 +56,8 @@ type EarthRenderer = 'realistic' | 'cobe' | 'tiled'
 
 type ThemeSettings = Record<string, unknown>
 
+const SECURE_REMOTE_URL_PATTERN = /^https:\/\//i
+
 /** 固定的字节精度配置 */
 const BYTE_DECIMALS: ByteDecimalsConfig = {
   B: 0,
@@ -435,6 +437,17 @@ const useAppStore = defineStore('app', () => {
 
   const dataUpdateInterval = computed<number>(() => readNumberSetting(themeSettings.value, 'dataUpdateInterval', 3, 1, 60))
 
+  const siteIconUrl = computed<string>(() => {
+    const value = themeSettings.value.siteIconUrl
+    if (typeof value !== 'string')
+      return ''
+
+    const url = value.trim()
+    const isSiteRelativePath = url.startsWith('/') && !url.startsWith('//')
+    const isSecureRemoteUrl = SECURE_REMOTE_URL_PATTERN.test(url)
+    return isSiteRelativePath || isSecureRemoteUrl ? url : ''
+  })
+
   const stopEarth = computed<boolean>(() => readBooleanSetting(themeSettings.value, 'stopEarth', false))
 
   const earthRenderer = computed<EarthRenderer>(() => {
@@ -663,6 +676,7 @@ const useAppStore = defineStore('app', () => {
     alertTitle,
     alertContent,
     dataUpdateInterval,
+    siteIconUrl,
     stopEarth,
     earthRenderer,
     hideEarth,

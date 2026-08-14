@@ -1,8 +1,8 @@
 {
   "name": "Komari Glassmorphism Enhanced (MXH)",
   "short": "GlassmorphismEnhanced",
-  "description": "MXH 个人适配版 Komari 毛玻璃主题，支持历史指标兼容访问、自定义默认节点顺序及 IPv4/IPv6/WARP 三网延迟与丢包历史",
-  "version": "2.2.2-mxh.2",
+  "description": "MXH 个人适配版 Komari 毛玻璃主题，支持历史指标兼容访问、自定义站点图标、默认节点顺序及 IPv4/IPv6/WARP 三网延迟与丢包历史",
+  "version": "2.2.2-mxh.3",
   "author": "jianmomo / mxh110708",
   "url": "https://github.com/mxh110708/komari-theme-Glassmorphism-Enhanced-Custom",
   "preview": "preview-v2.0.0.png",
@@ -28,6 +28,13 @@
         "type": "number",
         "default": 3,
         "help": "实时数据刷新间隔，单位：秒（建议 1-10 秒）"
+      },
+      {
+        "key": "siteIconUrl",
+        "name": "自定义站点图标",
+        "type": "string",
+        "default": "",
+        "help": "同时用于浏览器标签页和页面左上角图标。填写 HTTPS 图片 URL 或以 / 开头的站内路径，建议使用方形 PNG、WebP、SVG 或 ICO；留空或地址无效时使用主题默认图标。"
       },
       {
         "key": "rpcTransportMode",

@@ -53,6 +53,7 @@ const presetViews = [
   { label: '6 小时', hours: 6 },
   { label: '12 小时', hours: 12 },
   { label: '1 天', hours: 24 },
+  { label: '7 天', hours: 168 },
 ]
 
 // 可用视图列表

@@ -234,6 +234,10 @@ if "undefined/records/load" in javascript:
     raise SystemExit("Legacy broken history URL is still present")
 if "common:getRecords" not in javascript:
     raise SystemExit("RPC2 history implementation is missing")
+if "7 天" not in javascript:
+    raise SystemExit("Seven-day ping history preset is missing")
+if "siteIconUrl" not in javascript:
+    raise SystemExit("Custom site icon implementation is missing")
 configuration = manifest.get("configuration", {})
 configuration_items = configuration.get("data", [])
 order_item = next(
@@ -246,6 +250,16 @@ order_item = next(
 )
 if not order_item or order_item.get("default") != expected_order:
     raise SystemExit("Default node order is missing from the manifest")
+icon_item = next(
+    (
+        item
+        for item in configuration_items
+        if isinstance(item, dict) and item.get("key") == "siteIconUrl"
+    ),
+    None,
+)
+if not icon_item or icon_item.get("default") != "":
+    raise SystemExit("Custom site icon setting is missing from the manifest")
 
 connection = sqlite3.connect(database)
 try:
@@ -307,6 +321,8 @@ except HTTPError as error:
 
 print("INSTALLED_VERSION=" + expected_version)
 print("DEFAULT_ORDER=ok")
+print("SEVEN_DAY_PRESET=ok")
+print("CUSTOM_SITE_ICON=ok")
 print("HISTORY_API=" + history_api_status)
 PY
 

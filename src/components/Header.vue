@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Icon } from '@iconify/vue'
-import { computed, inject, ref } from 'vue'
+import { computed, inject, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -13,7 +13,32 @@ const appStore = useAppStore()
 
 const isScrolled = inject<ReturnType<typeof ref<boolean>>>('isScrolled', ref(false))
 
-const siteFavicon = ref('/favicon.ico')
+const DEFAULT_SITE_ICON = '/favicon.ico'
+const configuredSiteIcon = computed(() => appStore.siteIconUrl || DEFAULT_SITE_ICON)
+const activeSiteIcon = ref(DEFAULT_SITE_ICON)
+
+function updateDocumentFavicon(iconUrl: string) {
+  let favicon = document.querySelector<HTMLLinkElement>('link[rel~="icon"]')
+  if (!favicon) {
+    favicon = document.createElement('link')
+    favicon.rel = 'icon'
+    document.head.append(favicon)
+  }
+  favicon.href = iconUrl
+}
+
+watch(configuredSiteIcon, (iconUrl) => {
+  activeSiteIcon.value = iconUrl
+  updateDocumentFavicon(iconUrl)
+}, { immediate: true })
+
+function handleSiteIconError() {
+  if (activeSiteIcon.value === DEFAULT_SITE_ICON)
+    return
+
+  activeSiteIcon.value = DEFAULT_SITE_ICON
+  updateDocumentFavicon(DEFAULT_SITE_ICON)
+}
 
 const actionButtons = computed(() => {
   const themeTitleMap = {
@@ -73,7 +98,12 @@ const sitename = computed(() => appStore.publicSettings?.sitename || 'Komari Mon
     <div class="px-4 flex-between h-14 max-w-[1280px] mx-auto">
       <div class="flex items-center gap-3 cursor-pointer" @click="router.push('/')">
         <Avatar class="size-8">
-          <AvatarImage :src="siteFavicon" :alt="sitename" />
+          <AvatarImage
+            :key="activeSiteIcon"
+            :src="activeSiteIcon"
+            :alt="sitename"
+            @error="handleSiteIconError"
+          />
           <AvatarFallback>{{ sitename.slice(0, 1) }}</AvatarFallback>
         </Avatar>
         <h3 class="m-0 text-lg font-semibold">
