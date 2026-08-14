@@ -1,7 +1,7 @@
 {
   "name": "komari-theme-glassmorphism-enhanced",
   "type": "module",
-  "version": "2.2.2",
+  "version": "2.2.2-mxh.1",
   "packageManager": "bun@1.3.14",
   "author": {
     "name": "jianmomo",
@@ -42,7 +42,6 @@
   },
   "devDependencies": {
     "@antfu/eslint-config": "^7.4.3",
-    "@iconify/json": "^2.2.442",
     "@tailwindcss/vite": "^4.1.16",
     "@tsconfig/node24": "^24.0.4",
     "@types/node": "^24.10.13",

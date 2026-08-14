@@ -4,8 +4,8 @@
  * Komari 1.2.5 正处于 REST 到 RPC2 的迁移期。新版优先使用 RPC2；
  * RPC2 不可用或返回结构异常时，自动回退到官方保留的 REST 接口。
  */
-import type { PingRecord as ApiPingRecord, PingTask as ApiPingTask } from '@/utils/api'
-import type { Client, NodeStatus, PingRecord } from '@/utils/rpc'
+import type { LoadRecord as ApiLoadRecord, PingRecord as ApiPingRecord, PingTask as ApiPingTask } from '@/utils/api'
+import type { Client, NodeStatus, PingRecord, StatusRecord } from '@/utils/rpc'
 import { getSharedApi } from '@/utils/api'
 import { getSharedRpc } from '@/utils/rpc'
 
@@ -19,6 +19,10 @@ export interface CompatiblePingRecordsResponse {
   tasks: CompatiblePingTask[]
 }
 
+export interface CompatibleLoadRecordsResponse {
+  records: StatusRecord[]
+}
+
 export interface CompatibleNodesSnapshot {
   clients: Record<string, Client>
   statuses: Record<string, NodeStatus>
@@ -26,6 +30,7 @@ export interface CompatibleNodesSnapshot {
 
 const RPC_RETRY_INTERVAL_MS = 60_000
 let nodeRpcRetryAt = 0
+let loadRpcRetryAt = 0
 let pingRpcRetryAt = 0
 
 interface CompatibleRecentRecord {
@@ -179,6 +184,35 @@ export async function getCompatibleNodesSnapshot(): Promise<CompatibleNodesSnaps
   }
 
   return getRestNodesSnapshot()
+}
+
+function normalizeRestLoadRecord(record: ApiLoadRecord): StatusRecord {
+  return {
+    ...record,
+    load5: record.load,
+    load15: record.load,
+  }
+}
+
+/** 获取负载历史，优先使用 RPC2；不可用时回退到带有正确 /api 基址的 REST 接口。 */
+export async function getCompatibleLoadRecords(
+  uuid: string,
+  hours: number,
+): Promise<CompatibleLoadRecordsResponse> {
+  if (Date.now() >= loadRpcRetryAt) {
+    try {
+      const result = await getSharedRpc().getLoadRecords(uuid, hours)
+      loadRpcRetryAt = 0
+      return { records: result?.records ?? [] }
+    }
+    catch (error) {
+      loadRpcRetryAt = Date.now() + RPC_RETRY_INTERVAL_MS
+      console.warn('[KomariCompat] RPC2 负载历史接口不可用，已回退 REST。', error)
+    }
+  }
+
+  const result = await getSharedApi().getLoadRecords(uuid, hours)
+  return { records: (result?.records ?? []).map(normalizeRestLoadRecord) }
 }
 
 function normalizeRestPingRecord(uuid: string, record: ApiPingRecord): PingRecord {

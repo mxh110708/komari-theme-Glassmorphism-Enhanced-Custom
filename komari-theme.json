@@ -1,10 +1,10 @@
 {
-  "name": "Komari Glassmorphism Enhanced",
+  "name": "Komari Glassmorphism Enhanced (MXH)",
   "short": "GlassmorphismEnhanced",
-  "description": "增强型 Komari 毛玻璃主题，支持 IPv4/IPv6/WARP 三网延迟与丢包历史",
-  "version": "2.2.2",
-  "author": "jianmomo",
-  "url": "https://github.com/jianmomo/komari-theme-Glassmorphism-Enhanced",
+  "description": "MXH 个人适配版 Komari 毛玻璃主题，支持历史指标兼容访问、自定义默认节点顺序及 IPv4/IPv6/WARP 三网延迟与丢包历史",
+  "version": "2.2.2-mxh.1",
+  "author": "jianmomo / mxh110708",
+  "url": "https://github.com/mxh110708/komari-theme-Glassmorphism-Enhanced-Custom",
   "preview": "preview-v2.0.0.png",
   "configuration": {
     "type": "managed",
@@ -190,6 +190,13 @@
         "default": "default",
         "options": "default,monthlyCost,totalTraffic,upload,download,peak,offline,highLoad,expiring",
         "help": "进入首页时默认使用的节点筛选/排序模式。default=默认，monthlyCost=月成本（按每台机器折算月成本从高到低排序），totalTraffic=总流量，upload=上行，download=下行，peak=实时峰值，offline=离线，highLoad=高负载，expiring=即将到期。"
+      },
+      {
+        "key": "homeDefaultNodeOrder",
+        "name": "默认节点顺序",
+        "type": "string",
+        "default": "DMIT,VMISS,YUNYOO,BreadCloud",
+        "help": "默认快捷模式下按节点名称关键词排序，用英文逗号分隔且不区分大小写；未匹配节点保持 Komari 原有 weight 顺序。"
       },
       {
         "key": "homeHighLoadThreshold",

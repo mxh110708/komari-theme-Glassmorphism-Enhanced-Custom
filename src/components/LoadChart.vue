@@ -12,6 +12,7 @@ import { Spinner } from '@/components/ui/spinner'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAppStore } from '@/stores/app'
 import { useNodesStore } from '@/stores/nodes'
+import { getCompatibleLoadRecords } from '@/utils/compat'
 import { formatBytes, formatBytesSplit } from '@/utils/helper'
 import { fillMissingTimePoints } from '@/utils/recordHelper'
 import { getSharedRpc } from '@/utils/rpc'
@@ -214,15 +215,7 @@ async function fetchHistoryData() {
   error.value = null
 
   try {
-    const apiBase = import.meta.env.VITE_API_BASE
-    const response = await fetch(`${apiBase}/records/load?uuid=${props.uuid}&hours=${hours}`)
-
-    if (!response.ok) {
-      throw new Error(`HTTP error: ${response.status}`)
-    }
-
-    const resp = await response.json()
-    const records = resp.data?.records || []
+    const { records } = await getCompatibleLoadRecords(props.uuid, hours)
 
     // 按时间排序
     records.sort((a: StatusRecord, b: StatusRecord) =>

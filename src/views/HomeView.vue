@@ -151,6 +151,23 @@ function sortNodesByComputedValue(nodes: NodeData[], selector: (node: NodeData) 
     .map(item => item.node)
 }
 
+function sortNodesByDefaultOrder(nodes: NodeData[]): NodeData[] {
+  const order = appStore.homeDefaultNodeOrder
+
+  return nodes
+    .map((node, index) => {
+      const normalizedName = node.name.toLowerCase()
+      const matchedIndex = order.findIndex(keyword => normalizedName.includes(keyword))
+      return {
+        node,
+        index,
+        rank: matchedIndex === -1 ? Number.MAX_SAFE_INTEGER : matchedIndex,
+      }
+    })
+    .sort((a, b) => a.rank - b.rank || a.index - b.index)
+    .map(item => item.node)
+}
+
 function applyQuickControl(nodes: NodeData[], control: HomeQuickControlKey): NodeData[] {
   switch (control) {
     case 'monthlyCost':
@@ -171,7 +188,7 @@ function applyQuickControl(nodes: NodeData[], control: HomeQuickControlKey): Nod
       return nodes.filter(node => isExpiringNode(node, appStore.homeExpiringDays))
     case 'default':
     default:
-      return nodes
+      return sortNodesByDefaultOrder(nodes)
   }
 }
 

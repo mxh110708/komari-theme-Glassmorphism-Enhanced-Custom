@@ -74,6 +74,8 @@ const DEFAULT_GENERAL_CARD_ORDER: GeneralCardKey[] = [
   'downloadSpeed',
 ]
 
+const DEFAULT_HOME_NODE_ORDER = ['dmit', 'vmiss', 'yunyoo', 'breadcloud']
+
 const ALL_GENERAL_CARD_KEYS = [
   'memory',
   'disk',
@@ -511,6 +513,19 @@ const useAppStore = defineStore('app', () => {
     return 'default'
   })
 
+  const homeDefaultNodeOrder = computed<string[]>(() => {
+    const value = themeSettings.value.homeDefaultNodeOrder
+    if (typeof value !== 'string')
+      return [...DEFAULT_HOME_NODE_ORDER]
+
+    const order = value
+      .split(',')
+      .map(item => item.trim().toLowerCase())
+      .filter(Boolean)
+
+    return order.length > 0 ? [...new Set(order)] : [...DEFAULT_HOME_NODE_ORDER]
+  })
+
   const homeHighLoadThreshold = computed<number>(() => readNumberSetting(themeSettings.value, 'homeHighLoadThreshold', 80, 1, 100))
 
   const homeTrafficWarningThreshold = computed<number>(() => readNumberSetting(themeSettings.value, 'homeTrafficWarningThreshold', 80, 1, 100))
@@ -658,6 +673,7 @@ const useAppStore = defineStore('app', () => {
     homeQuickControlsEnabled,
     homeQuickControlOrder,
     homeQuickDefaultControl,
+    homeDefaultNodeOrder,
     homeHighLoadThreshold,
     homeTrafficWarningThreshold,
     homeExpiringDays,

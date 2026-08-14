@@ -38,6 +38,7 @@ const HTTP_PROTOCOL_PREFIX = 'http://'
 const HTTPS_PROTOCOL_PREFIX = 'https://'
 const WS_PROTOCOL_PREFIX = 'ws://'
 const WSS_PROTOCOL_PREFIX = 'wss://'
+const TRAILING_SLASH_REGEX = /\/$/
 
 /** RPC 方法元数据 */
 export interface MethodMeta {
@@ -231,7 +232,7 @@ export class RpcClient {
   private wsConnectPromise: Promise<void> | null = null
 
   constructor(options: RpcClientOptions = {}) {
-    const apiBase = (import.meta.env.VITE_API_BASE || '/api').replace(/\/$/, '')
+    const apiBase = (import.meta.env.VITE_API_BASE || '/api').replace(TRAILING_SLASH_REGEX, '')
     this.baseUrl = options.baseUrl || `${apiBase}/rpc2`
     this.timeout = options.timeout || 30000
     this.useWebSocket = options.useWebSocket || false
