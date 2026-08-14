@@ -2,7 +2,7 @@
   "name": "Komari Glassmorphism Enhanced (MXH)",
   "short": "GlassmorphismEnhanced",
   "description": "MXH 个人适配版 Komari 毛玻璃主题，支持历史指标兼容访问、自定义默认节点顺序及 IPv4/IPv6/WARP 三网延迟与丢包历史",
-  "version": "2.2.2-mxh.1",
+  "version": "2.2.2-mxh.2",
   "author": "jianmomo / mxh110708",
   "url": "https://github.com/mxh110708/komari-theme-Glassmorphism-Enhanced-Custom",
   "preview": "preview-v2.0.0.png",

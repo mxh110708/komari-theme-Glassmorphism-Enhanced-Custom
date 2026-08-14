@@ -194,6 +194,47 @@ function normalizeRestLoadRecord(record: ApiLoadRecord): StatusRecord {
   }
 }
 
+function normalizeRpcLoadRecord(record: unknown): StatusRecord | null {
+  if (!record || typeof record !== 'object')
+    return null
+
+  const candidate = record as StatusRecord
+  if (typeof candidate.time !== 'string')
+    return null
+
+  return {
+    ...candidate,
+    load5: typeof candidate.load5 === 'number' ? candidate.load5 : candidate.load,
+    load15: typeof candidate.load15 === 'number' ? candidate.load15 : candidate.load,
+  }
+}
+
+/**
+ * Komari 1.3.x 将 load records 按 UUID 分组；旧 RPC 版本可能直接返回数组。
+ * 在传给图表前统一为指定节点的扁平、有效记录数组。
+ */
+export function normalizeRpcLoadRecords(records: unknown, uuid: string): StatusRecord[] {
+  let source: unknown[]
+
+  if (Array.isArray(records)) {
+    source = records
+  }
+  else if (records && typeof records === 'object') {
+    const grouped = records as Record<string, unknown>
+    const selected = grouped[uuid]
+    source = Array.isArray(selected)
+      ? selected
+      : []
+  }
+  else {
+    source = []
+  }
+
+  return source
+    .map(normalizeRpcLoadRecord)
+    .filter((record): record is StatusRecord => record !== null)
+}
+
 /** 获取负载历史，优先使用 RPC2；不可用时回退到带有正确 /api 基址的 REST 接口。 */
 export async function getCompatibleLoadRecords(
   uuid: string,
@@ -203,7 +244,7 @@ export async function getCompatibleLoadRecords(
     try {
       const result = await getSharedRpc().getLoadRecords(uuid, hours)
       loadRpcRetryAt = 0
-      return { records: result?.records ?? [] }
+      return { records: normalizeRpcLoadRecords(result?.records, uuid) }
     }
     catch (error) {
       loadRpcRetryAt = Date.now() + RPC_RETRY_INTERVAL_MS

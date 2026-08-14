@@ -186,6 +186,19 @@ export interface StatusRecord {
   connections_udp: number
 }
 
+/**
+ * Komari 1.3.x 的负载历史会按客户端 UUID 分组；旧版本及 REST 接口返回扁平数组。
+ */
+export type LoadRecordCollection = StatusRecord[] | Record<string, StatusRecord[]>
+
+export interface LoadRecordsResult {
+  count?: number
+  records: LoadRecordCollection
+  from?: string
+  to?: string
+  load_type?: string
+}
+
 /** Ping 记录 */
 export interface PingRecord {
   client: string
@@ -589,7 +602,7 @@ export class KomariRpc {
     hours?: number
     task_id?: number
     load_type?: string
-    max_count?: number
+    maxCount?: number
   }): Promise<unknown> {
     return this.client.call('common:getRecords', params)
   }
@@ -597,13 +610,13 @@ export class KomariRpc {
   /**
    * 获取负载记录
    */
-  async getLoadRecords(uuid?: string, hours?: number, loadType?: string, maxCount?: number): Promise<{ records: StatusRecord[] }> {
-    return this.client.call<{ records: StatusRecord[] }>('common:getRecords', {
+  async getLoadRecords(uuid?: string, hours?: number, loadType?: string, maxCount?: number): Promise<LoadRecordsResult> {
+    return this.client.call<LoadRecordsResult>('common:getRecords', {
       type: 'load',
       uuid,
       hours,
       load_type: loadType,
-      max_count: maxCount,
+      maxCount,
     })
   }
 
@@ -615,7 +628,7 @@ export class KomariRpc {
       type: 'ping',
       task_id: taskId,
       hours,
-      max_count: maxCount,
+      maxCount,
     })
   }
 

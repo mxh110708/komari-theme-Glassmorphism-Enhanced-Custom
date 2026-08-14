@@ -6,6 +6,7 @@ This private archive tracks the personal Komari theme derived from
 ## Personal changes
 
 - Load historical node metrics through Komari RPC2 with a REST compatibility fallback.
+- Normalize Komari 1.3.x RPC2 load records from UUID-grouped objects to chart-ready arrays.
 - Default node order: DMIT, VMISS, YUNYOO, BreadCloud.
 - Keep unmatched nodes in their original Komari `weight` order.
 

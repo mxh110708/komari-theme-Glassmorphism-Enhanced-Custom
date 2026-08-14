@@ -186,6 +186,10 @@ const pingRecords = await rpc.getRecords({
 
 便捷方法：获取负载历史记录。
 
+Komari 1.3.x 的 `result.records` 始终按客户端 UUID 分组，即使请求中只指定了一个
+UUID；旧版本可能返回扁平数组。视图代码应通过兼容层展开记录，不要直接对
+`result.records` 调用数组方法。
+
 ```typescript
 // 获取所有节点最近 1 小时的负载记录
 const records = await rpc.getLoadRecords()
